@@ -3,17 +3,17 @@ from pyspark.sql.session import SparkSession
 #importa tipos de daos
 from pyspark.sql.types import(BooleanType, IntegerType, IntegralType, StringType, StructType, TimestampType, ArrayType, FloatType, StructField)
 
+from pyspark.sql.functions import lit
+
 import pyspark.sql.functions as F
 
+#Configu
 spark = SparkSession. builder.appName('TFD') \
     .config('spark.master', 'local') \
     .config('spark.executor.memory', '1gb') \
     .config('spark.shuffle.sql.partitions', 1)\
     .getOrCreate()
 
-#df = spark.read.load('C:\Sparkscripts\student_mat.csv', format='csv', sep=',', inferSchema='true', header='true')
-#df.printSchema()
-#print('algo')
 
 schema = StructType([StructField('school', StringType()),
                     StructField('sex', StringType()),
@@ -52,17 +52,26 @@ schema = StructType([StructField('school', StringType()),
 
 path = 'C:\Sparkscripts\student_mat.csv'
 
-df = spark.read.format('csv') \
+matematicaDF = spark.read.format('csv') \
     .schema(schema) \
     .load(path, sep=",", header=True)
-
 #df.printSchema()
 #df.show(5)
 
-#novoDF1 = df.withColumn('NewConfirmed', 100 + F.col('confirmed')) # soma 100 aos valores da coluna confirmed
+matematicaDF = matematicaDF.withColumn('Subject', lit("Math")) # Cria uma coluna adicionando o subject Math nesse dataFrame
 
-novoDF = df.withColumn('NewConfirmed', F.col('g3') - F.col('g3')).cast(StringType())
-novoDF.printSchema()
+path = 'C:\Sparkscripts\student_por.csv'
 
-#novoDF = df.withColumn('NewConfirmed', F.col(0)) 
-novoDF.show(5)
+portuguesDF = spark.read.format('csv') \
+    .schema(schema) \
+    .load(path, sep=",", header=True) 
+
+portuguesDF = portuguesDF.withColumn('Subject', lit("Portuguese"))
+#df1 = df.limit()
+portuguesDF.select('school').count()
+
+novoDF = matematicaDF.union(portuguesDF)
+
+novoDF.groupby('Subject').count().show()
+
+print(novoDF[0][1])
