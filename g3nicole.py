@@ -4,6 +4,7 @@ from g3utilidades import UtilidadesG3
 from pyspark.sql.session import SparkSession
 from pyspark.sql.types import *
 import pyspark.sql.functions as F
+import pandas as pd
 
 # Objeto spark criado e o método para criar uma sessão é chamado
 spark = SparkG3().iniciar_sessao()
@@ -52,17 +53,25 @@ colunas_inteiro = ['age']
 df3 = util.converterColuna(df3, colunas_inteiro, IntegerType())
 # Caminho do próximo arquivo que será utilizado
 path = "C:/scripts/population_csv.csv"
+#path = 'https://raw.githubusercontent.com/isaiasavila/dados/main/population_csv.csv'
 df_csv = spark.read.load(path, format = 'csv', sep = ',', inferschema = 'true', header = 'true')
-df_csv = df_csv.select(['Country Name','Year','Value']).filter(df_csv['Year'] == '2018')
-colunas_inteiro = ['Value']
-df_csv = util.converterColuna(df_csv, colunas_inteiro, IntegerType())
 
+dfp = pd.read_csv('https://raw.githubusercontent.com/isaiasavila/dados/main/population_csv.csv')
+print(dfp)
+
+df_csv = df_csv.select(['Country Name','Year','Value']).filter(df_csv['Year'] == '2018')
+df_csv.show(50)
+df_csv.printSchema()
+colunas_inteiro = ['Value']
+
+df_csv = util.converterColuna(df_csv, colunas_inteiro, IntegerType())
+df_csv.printSchema()
 
 df_join = df3.join(df_csv, df_csv['Country Name'] == df3['country'], how='left')
 
 # df_join.filter(df_join['value'] == 'null').groupBy()
 print('...')
-df_join.groupby('country', 'value').count().sort('value').show(300)
+df_join.groupby('country', 'Value').count().sort('Value').show(300)
 # x = df3.select(['country']).count()
 # y = df_csv.select(['Country Name']).count()
 # z = df_join.select(['Country Name']).count()
