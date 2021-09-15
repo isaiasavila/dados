@@ -1,15 +1,11 @@
 from datetime import date
+from g3spark import SparkG3
 from g3utilidades import UtilidadesG3
 from pyspark.sql.session import SparkSession
-
 from pyspark.sql.types import *
 import pyspark.sql.functions as F
 
-spark = SparkSession.builder.appName('Teste') \
-    .config("spark.master","local") \
-    .config("spark.executor.memory","1gb") \
-    .config("spark.shuffle.sql.partitions", 1) \
-    .getOrCreate()
+spark = SparkG3().iniciar_sessao()
 
 schema = StructType([StructField("nome", StringType()),
          StructField("short_name", StringType()),
@@ -54,7 +50,8 @@ df3 = df3.withColumn('age',2021 - df3.birth_date.substr(1, 4))\
          .drop('birth_date')
 
 # Objeto criado para utilização do método converterColuna
-c = UtilidadesG3()
+util = UtilidadesG3()
+# Lista de colunas que serão alterados
 colunas_inteiro = ['age']
-df3 = c.converterColuna(df3, colunas_inteiro, IntegerType())
+df3 = util.converterColuna(df3, colunas_inteiro, IntegerType())
 df3.show(1000)
