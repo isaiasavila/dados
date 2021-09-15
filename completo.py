@@ -44,6 +44,36 @@ df_join = df_join.toDF(*['Idade', 'Categoria', 'Nome', 'Nac', 'rank', 'Gênero',
 df_join = df_join.drop('rank', 'rank1', 'count')
 # df_join.show()
 
+path = "C:/Users/Ricardo Felipe/Desktop/SoulCode/Engenharia de Dados/Projeto FInal/population_csv.csv"
+
+df_w2 = spark.read.load(path, format = 'csv', sep = ',', inferschema = 'true', header = 'true')
+df_w2 = df_w2.select(['Country Name','Year','Value']).filter(df_w2['Year'] == '2018')
+
+df_join_w2 = df_join.join(df_w2, df_join.Seleção == df_w2['Country Name'], 'left')
+# df_join_w2.show()
+
+df_join_w2 = df_join_w2.toDF(*['Idade', 'Evento', 'Atleta', 'Nac', 'Gênero', 'Modalidade', 'País', 'Ranking', 'Medalha'
+                        , 'country', 'year', 'População_Total'])
+
+df_join_w2 = df_join_w2.select('Atleta', 'Idade', 'Gênero', 'Modalidade', 'Medalha', 'País', 'População_Total')
+# df_join_w2.show()
+# df_join_w2.printSchema()
+
+
+def colunaTipo(dataframe, nomes, novoTipo):
+    for nome in nomes:
+        dataframe = dataframe.withColumn(nome, dataframe[nome].cast(novoTipo))
+    return dataframe
+
+colunasI = ['Idade', 'População_Total']
+
+df_join_w2 = colunaTipo(df_join_w2, colunasI, IntegerType())
+
+# df_join_w2.printSchema()
+
+# ct = df_join_w2.select('Country Name').count()
+# print(ct) #7917
+
 # ===================================================== TRANSFORM ======================================================
 pandasDF = df_join.toPandas()
 # print(type(pandasDF)) # <class 'pandas.core.frame.DataFrame'>
