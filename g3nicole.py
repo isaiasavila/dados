@@ -53,32 +53,48 @@ colunas_inteiro = ['age']
 df3 = util.converterColuna(df3, colunas_inteiro, IntegerType())
 # Caminho do próximo arquivo que será utilizado
 path = "C:/scripts/population_csv.csv"
-#path = 'https://raw.githubusercontent.com/isaiasavila/dados/main/population_csv.csv'
+# path = 'https://raw.githubusercontent.com/isaiasavila/dados/main/population_csv.csv'
+
+
 df_csv = spark.read.load(path, format = 'csv', sep = ',', inferschema = 'true', header = 'true')
 
-dfp = pd.read_csv('https://raw.githubusercontent.com/isaiasavila/dados/main/population_csv.csv')
-print(dfp)
+
+# Pandas
+# dfp = pd.read_csv('https://raw.githubusercontent.com/isaiasavila/dados/main/population_csv.csv')
+# print(dfp)
 
 df_csv = df_csv.select(['Country Name','Year','Value']).filter(df_csv['Year'] == '2018')
-df_csv.show(50)
-df_csv.printSchema()
 colunas_inteiro = ['Value']
-
 df_csv = util.converterColuna(df_csv, colunas_inteiro, IntegerType())
-df_csv.printSchema()
+# Método para troca
+# # Troca o nome dos países para o padrão do dataSet do projeto
+# df = df_csv.withColumn('Country Name', F.when(F.col('Country Name') == 'United States', 'United States of America')\
+#             .otherwise(F.col('Country Name')))
+
+
+
+#df.filter(df['Country Name'] == 'United States of America').select('Country Name','Value').show(50)
 
 df_join = df3.join(df_csv, df_csv['Country Name'] == df3['country'], how='left')
+# Mostrando os países (distintos) agrupados por população filter('Value' == 'null')
+
+#df = df_join.groupby('country', 'Value').count().filter(df_join['country'] != 'Argentina')
+df = df_join.groupby('country', 'Value').count().filter(df_join['Value'] )
+
+df.show(50)
+
+# lista1  = df1['country']
+# lista2 = df_csv['Country Name']
 
 # df_join.filter(df_join['value'] == 'null').groupBy()
-print('...')
-df_join.groupby('country', 'Value').count().sort('Value').show(300)
+print('..........->->->')
+#
 # x = df3.select(['country']).count()
 # y = df_csv.select(['Country Name']).count()
 # z = df_join.select(['Country Name']).count()
 # print ('contagem de linhas \n ',x,'...', y,'...', z)
 input('.....')
 df_join = df_join.select(['athlete_name','age','gender','discipline','medal_type','country','value'])
-
 
 df_join = df_join.dropna()
 # Excusão d
