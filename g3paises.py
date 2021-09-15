@@ -7,11 +7,14 @@ spark = SparkG3().iniciar_sessao()
 path = "C:/scripts/population_csv.csv"
 df_csv = spark.read.load(path, format = 'csv', sep = ',', inferschema = 'true', header = 'true')
 df_csv = df_csv.select(['Country Name','Year','Value']).filter(df_csv['Year'] == '2018')
-df = df_csv.toPandas()
+
+
+#df = df_csv.toPandas()
 # Guardar a população mundial
 #print([df['Country Name'] == 'World'].value,' população mundial')
 
-df = df.drop(labels=range(0, 46), axis=0)
+#df = df.drop(labels=range(0, 46), axis=0)
+
 #x = df['Value'].describe()
 #y = df['Value'].value_counts(normalize=True)
 
