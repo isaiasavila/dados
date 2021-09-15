@@ -1,10 +1,98 @@
 from datetime import date
-from g3spark import SparkG3
-from g3utilidades import UtilidadesG3
 from pyspark.sql.session import SparkSession
 from pyspark.sql.types import *
 import pyspark.sql.functions as F
 import pandas as pd
+
+class MongoG3():
+    def conecta_mongo_colecao(self, tabela):
+        '''
+        Método para acessar ao repositório especificado do MongoDB de Isaias Avila dos Santos,
+        utilizando o usuário e a senha informados como parâmetro, retorna um banco
+        O método retorna uma coleção especificada como parâmetro <tabela> no repositório
+        repassa o nome do banco, usuario e senha para conexão com o MongoDB
+        utilizando o método <get_database(...)> da classe
+        '''
+        from pymongo import MongoClient
+        import pymongo
+        # Forneça o url do atlas mongodb para conectar python a mongodb usando pymongo
+        try:
+            # Lê um arquivo com as informações, para conexão no banco de dados Mongo
+            with open('conexao') as arquivoTemporario:
+                nl = arquivoTemporario.readlines()
+            # Depois de ler o arquivo joga a informação para uma string de conexão
+            CONNECTION_STRING = nl[0]
+            # Crie uma conexão usando MongoClient. Você pode importar MongoClient ou usar pymongo.MongoClient
+            _client = MongoClient(CONNECTION_STRING)
+            # Cria o banco de dados.
+            _dbname = _client['projetofinal']
+            # o parâmetro do método, específica a coleção que será utilizada
+            _collection_name = _dbname[tabela]
+            # o método retorna uma coleção inteira, muita atenção quando ela for muito grande
+            return _collection_name.find()
+        except:
+            print('Falha na conexão! Tente novamente')
+
+def conecta_mongo(self, tabela):
+        '''
+        Método para acessar ao repositório especificado do MongoDB de Isaias Avila dos Santos,
+        utilizando o usuário e a senha informados como parâmetro, retorna um banco
+        O método retorna uma coleção especificada como parâmetro <tabela> no repositório
+        repassa o nome do banco, usuario e senha para conexão com o MongoDB
+        utilizando o método <get_database(...)> da classe
+        '''
+        from pymongo import MongoClient
+        import pymongo
+        # Forneça o url do atlas mongodb para conectar python a mongodb usando pymongo
+        try:
+            # Lê um arquivo com as informações, para conexão no banco de dados Mongo
+            with open('conexao') as arquivoTemporario:
+                nl = arquivoTemporario.readlines()
+            # Depois de ler o arquivo joga a informação para uma string de conexão
+            CONNECTION_STRING = nl[0]
+            # Crie uma conexão usando MongoClient. Você pode importar MongoClient ou usar pymongo.MongoClient
+            _client = MongoClient(CONNECTION_STRING)
+            # Cria o devolve banco de dados.
+            _dbname = _client['projetofinal']
+            # o método retorna uma coleção inteira, muita atenção quando ela for muito grande
+            return _dbname
+        except:
+            print('Falha na conexão! Tente novamente')
+
+class SparkG3():
+
+    def iniciar_sessao(self):
+        # Importações necessárias para a sessão
+        from pyspark.sql.session import SparkSession
+
+        spark = SparkSession.builder.appName('Sessao')\
+                                    .config("spark.master", "local")\
+                                    .config("spark.executor.memory", "1gb")\
+                                    .config("spark.shuffle.sql.partitions", 1)\
+                                    .getOrCreate()
+        return spark
+
+class UtilidadesG3():
+
+    def converterColuna(self, dataframe, nomes, novoTipo):
+        '''
+        Método para converter colunas de um dataset de um tipo para outro
+        [1º parâmetro] dataFrame, atenção, o dataFrame será modificado
+        [2º parâmetro] um array com o nome das colunas
+        [3º parâmetro] novo tipo para que a seja efetuada mudança
+        '''
+        for nome in nomes:
+            dataframe = dataframe.withColumn(nome, dataframe[nome].cast(novoTipo))
+        return dataframe
+
+    def printp():
+        _x = '<|.......................................|>'
+        print(_x)
+
+# Código inicial para dataFrame de paises
+# path = "C:/scripts/population_csv.csv"
+# df_csv = spark.read.load(path, format = 'csv', sep = ',', inferschema = 'true', header = 'true')
+# df_csv = df_csv.select(['Country Name','Year','Value']).filter(df_csv['Year'] == '2018')
 
 # Objeto spark criado e o método para criar uma sessão é chamado
 spark = SparkG3().iniciar_sessao()
