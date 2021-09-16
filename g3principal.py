@@ -85,6 +85,18 @@ class UtilidadesG3():
             dataframe = dataframe.withColumn(nome, dataframe[nome].cast(novoTipo))
         return dataframe
 
+    def criar_df(coluna1, coluna2, coluna3, parametro1, parametro2, parametro3):
+        '''
+        Método para criar um dataFrame dinamicamente
+        [coluna(s)] parâmetros para o nome das colunas
+        [parametro(s)] parâmetros da chave do dataFrame
+        '''
+        _dataf = pd.DataFrame({coluna1: [f'{parametro1:,}'.replace(',', '.')],
+                            coluna2: [f'{parametro2:,}'.replace(',', '.')],
+                            coluna3: [f'{parametro3:,}'.replace(',', '.')],
+        })
+        return _dataf
+
     def printp():
         _x = '<|.......................................|>'
         print(_x)
@@ -124,7 +136,7 @@ df_atletas = df_atletas.withColumnRenamed("discipline", "disciplina")
 path = "C:/scripts/medals.csv"
 # Iniciando segunda base de dados
 df_medalhas = spark.read.load(path, format="csv", sep=",", inferSchema="true", header="true")
-
+# 
 df_medalhas = df_medalhas.withColumnRenamed("country", "namecountry")
 # Juntar dois data sets |||||||||||||||| Código da Nicole' bad ||||||||||||||||
 #df_atletas_medalhas = df_atletas_medalhas.join(df_medalhas, ["country"], how='left')
@@ -167,6 +179,40 @@ colunas_inteiro = ['Value']
 df_populacao = util.converterColuna(df_populacao, colunas_inteiro, IntegerType())
 # Método para troca
 # # Troca o nome dos países para o padrão do dataSet do projeto
+lista1 = ["Kyrgyz Republic","Republic of Moldova","Republic of Korea",'"Egypt, Arab Rep."',"People's Republic of China",\
+         "Slovakia","Islamic Republic of Iran","Hong Kong, China","Bahamas","Great Britain",\
+         "United States of America","Côte d'Ivoire","Venezuela","ROC"]
+lista2 = ["Kyrgyzstan","Moldova",'"Korea, Rep."','Egypt',"China","Slovak Republic",\
+        '"Iran, Islamic Rep."','"Hong Kong SAR, China"','"Bahamas, The"',"United Kingdom",\
+         "United States","Cote d'Ivoire",'"Venezuela',"Russian Federation"]
+
+for i in range (len(lista1)):
+    df1 = df_populacao.withColumn('Country Name', F.when(F.col('Country Name') == lista2[i], \
+        lista1[i]).otherwise(F.col('Country Name')))
+# Nome das colunas da linha que será adicionada
+
+#-------------------------------------------------------Adicionar o Taipé, melhorar o método, não está funcionando
+# colunas = ['Country Name', 'Year', 'Value']
+# valores = [('Chinese Taipei',2018,23000000)]
+# # Nova linha adicionada, está faltando Chinese Taipe
+# novaLinha = spark.createDataFrame(valores,colunas)
+# #print('Taipé Chinês')
+# novaLinha.show()
+# #input('ok')
+# appended = df1.union(novaLinha)
+#appended.show(261)
+#df1 = df1.union(novaLinha)
+print('\n...\nNomes alterados?\n...\n...\n')
+df1.show(1000000)
+input('...')
+# with open('saidas.txt', 'w') as file_object:
+#     file_object.write(df1.show(1000000))
+
+
+
+
+
+
 # df1 = df_populacao.withColumn('Country Name', F.when(F.col('Country Name') == 'United States', 'United States of America')\
 #             .otherwise(F.col('Country Name')))
 
@@ -176,18 +222,18 @@ df_populacao = util.converterColuna(df_populacao, colunas_inteiro, IntegerType()
 
 df_atletas_medalhas_pop = df_atletas_medalhas.join(df_populacao,\
      df_populacao['Country Name'] == df_atletas_medalhas['country'], how='left')
-df_atletas_medalhas_pop.show(500)
+# df_atletas_medalhas_pop.show(500)
 
 print('...\n\n\n...')
 
-df_pop_atletas_medalhas = df_populacao.join(df_atletas_medalhas, \
-    df_populacao['Country Name'] == df_atletas_medalhas['country'], how='right')
+# df_pop_atletas_medalhas = df_populacao.join(df_atletas_medalhas, \
+#     df_populacao['Country Name'] == df_atletas_medalhas['country'], how='right')
 #df_pop_atletas_medalhas.show(5)
 
 x = df_atletas_medalhas_pop.select(['country']).count()
-y = df_pop_atletas_medalhas.select(['country']).count()
-print ('contagem de linhas \n ',x,'...', y,'...')
-df1 = df_pop_atletas_medalhas.groupBy('country','Country name','Value').count().sort('Value').limit(36).toPandas()
+# y = df_pop_atletas_medalhas.select(['country']).count()
+# print ('contagem de linhas \n ',x,'...', y,'...')
+#df1 = df_pop_atletas_medalhas.groupBy('country','Country name','Value').count().sort('Value').limit(36).toPandas()
 #print(df1)
 # Mostrando os países (distintos) agrupados por população filter('Value' == 'null')
 print('...\n\n\n...')
@@ -196,11 +242,12 @@ print('...\n\n\n...')
 #df1 = df_atletas_medalhas_pop.groupby('country', 'Value').count().filter(df_atletas_medalhas_pop['Value'] )
 # Buscando a primeira lista de países
 df2 = df_atletas_medalhas_pop.groupBy('country','Country name','Value').count().sort('Value').limit(35).toPandas()
-#print(df2)
+
+print(df2)
 # df1 = df1.sort_values()
 # df2.replace({'country':{'"': ''}})
 lista2 = []
-lista1 = df1['country']
+# lista1 = df1['country']
 
 
 
@@ -229,3 +276,5 @@ df_atletas_medalhas_pop = df_atletas_medalhas_pop.toDF(*['Atleta', 'Idade', 'Gê
 # df_atletas_medalhas_pop.show(20)
 #df_atletas_medalhas.join(df_atletas_medalhas, df_populacao['Country Name'] == df_atletas_medalhas['country'], how='left').show()
 # df_atletas_medalhas_pop.show(200)
+
+
