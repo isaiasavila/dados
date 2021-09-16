@@ -263,6 +263,17 @@ df_populacao = util.converterColuna(df_populacao, colunas_inteiro, IntegerType()
 # JOIN da tabela (athletes x medals) x (população)
 df_atletas_medalhas_pop = df_atletas_medalhas.join(df_populacao,\
      df_populacao['Country Name'] == df_atletas_medalhas['country'], how='left')
+# Método para troca
+# # Troca o nome dos países para o padrão do dataSet do projeto
+lista1 = ["Kyrgyz Republic","Republic of Moldova","Republic of Korea",'"Egypt, Arab Rep."',"People's Republic of China",\
+         "Slovakia","Islamic Republic of Iran","Hong Kong, China","Bahamas","Great Britain",\
+         "United States of America","Côte d'Ivoire","Venezuela","ROC"]
+lista2 = ["Kyrgyzstan","Moldova",'"Korea, Rep."','Egypt',"China","Slovak Republic",\
+        '"Iran, Islamic Rep."','"Hong Kong SAR, China"','"Bahamas, The"',"United Kingdom",\
+         "United States","Cote d'Ivoire",'"Venezuela',"Russian Federation"]
+for i in range (len(lista1)):
+    df1 = df_populacao.withColumn('Country Name', F.when(F.col('Country Name') == lista2[i], \
+        lista1[i]).otherwise(F.col('Country Name')))
 #util.contar_linha(df_atletas_medalhas_pop,'Country Name') # Teste
 # Seleção final dos dados que serão trabalhados
 df_atletas_medalhas_pop = df_atletas_medalhas_pop.select(['athlete_name','age','gender',\
@@ -275,6 +286,7 @@ df_atletas_medalhas_pop = df_atletas_medalhas_pop.drop_duplicates()
 df_atletas_medalhas_pop = df_atletas_medalhas_pop.toDF(*['Atleta', 'Idade', 'Gênero', 'Modalidade',\
                                                          'Medalha', 'País', 'População_Total'])
 # util.contar_linha(df_atletas_medalhas_pop,'Atleta') # Teste
+
 ###################################################################################################################
 # TRANSFORM/ ANALYSIS - NICOLE - OLIMPÍADAS
 ###################################################################################################################
@@ -325,7 +337,20 @@ display(util.criar_df('Ouro', 'Prata','Bronze',mulheres_O, mulheres_P, mulheres_
 print('Medalhas masculinas...')
 display(util.criar_df('Ouro', 'Prata','Bronze',homem_O, homem_P, homem_B)) # .style.hide_index()
 #util.controle_fluxo()
-input('<enter>')
+
+# Transformando o Dataset em um dataFrame Pandas
+df_atletas_medalhas_pop = df_atletas_medalhas_pop.toPandas()
+# 
+df_para_csv = df_para_csv.toPandas()
+db = MongoG3()
+collection_name = db.conecta_mongo_colecao('olimpi')
+data_dict = df_atletas_medalhas_pop.to_dict('records') #somente em pandas consigo transformar em dicionário
+collection_name.insert_many(data_dict)
+# Transformando o Dataset em um dataFrame Pandas
+
+collection_name = db.conecta_mongo_colecao('paraolim')
+data_dict = df_para_csv.to_dict('records')
+collection_name.insert_many(data_dict)
 
 ###################################################################################################################
 # TRANSFORM/ ANALYSIS - LEONARDO - OLIMPÍADAS
