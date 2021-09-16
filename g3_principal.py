@@ -7,6 +7,10 @@ from pyspark.sql.functions import explode_outer
 from pyspark.sql.types import *
 import pyspark.sql.functions as F
 import pandas as pd
+from pandas.core.frame import DataFrame
+import matplotlib.pyplot as plt
+from IPython.display import display
+from numpy import product
 ###################################################################################################################
 # CLASS
 class MongoG3():
@@ -114,10 +118,21 @@ class UtilidadesG3():
         print('número de linhas: ', contador)
         _dataFrame.show(25)
         print('Tipo: ', type(_dataFrame))
-        print('\n.......................................')
+        print('\n+.......................................+')
 
     def mostrar_tipo(self, _dataFrame):
         print(type(_dataFrame))
+
+    def controle_fluxo(s = 0):
+        import os
+        '''
+        Método para segurar ou não a informação na tela do terminal
+        '''
+        if s == 0:
+            input('<enter>')
+        else:
+            print('<enter>')
+        os.system('cls')
 
 ###################################################################################################################
 # EXTRACT
@@ -179,7 +194,7 @@ df_para_pop = util.converterColuna(df_para_pop, colunasI, IntegerType())
 # util.mostrar_df(df_para_pop) # Teste
 
 ###################################################################################################################
-# TRANSFORM - NICOLE
+# EXTRACT
 # Olimpíadas (athletes x medals)
 # Esquema da base de dados
 schema = StructType([StructField("nome", StringType()),
@@ -212,7 +227,7 @@ df_medalhas = spark.read.load(path, format="csv", sep=",", inferSchema="true", h
 # Alterando o nome de uma das colunas do outro dataset, ação necessária para drop posterior
 df_medalhas = df_medalhas.withColumnRenamed("country", "namecountry")
 # Juntar dois data sets (JOIN)
-df_atletas_medalhas = df_atletas.join(df_medalhas,\
+df_atletas_medalhas = df_medalhas.join(df_atletas,\
      df_medalhas['namecountry'] == df_atletas['country'], how='left')
 # df_atletas_medalhas.show() # Teste de impressão
 # Excluindo (DROP) colunas que não serão utilizadas nas análises
@@ -248,20 +263,7 @@ df_populacao = util.converterColuna(df_populacao, colunas_inteiro, IntegerType()
 # JOIN da tabela (athletes x medals) x (população)
 df_atletas_medalhas_pop = df_atletas_medalhas.join(df_populacao,\
      df_populacao['Country Name'] == df_atletas_medalhas['country'], how='left')
-print('saida esperada')
-util.contar_linha(df_atletas_medalhas_pop,'Country Name')
-
-
-
-df_pop_atletas_medalhas = df_populacao.join(df_atletas_medalhas, \
-    df_populacao['Country Name'] == df_atletas_medalhas['country'], how='right')
-#df_pop_atletas_medalhas.show(5)
-
-x = df_atletas_medalhas_pop.select(['country']).count()
-y = df_pop_atletas_medalhas.select(['country']).count()
-# print ('contagem de linhas \n ',x,'...', y,'...')
-df1 = df_pop_atletas_medalhas.groupBy('country','Country name','Value').count().sort('Value').limit(36).toPandas()
-
+#util.contar_linha(df_atletas_medalhas_pop,'Country Name') # Teste
 # Seleção final dos dados que serão trabalhados
 df_atletas_medalhas_pop = df_atletas_medalhas_pop.select(['athlete_name','age','gender',\
                                                           'discipline','medal_type','country','value'])
@@ -272,8 +274,139 @@ df_atletas_medalhas_pop = df_atletas_medalhas_pop.drop_duplicates()
 # Renomeação dos cabeçalhos para o português
 df_atletas_medalhas_pop = df_atletas_medalhas_pop.toDF(*['Atleta', 'Idade', 'Gênero', 'Modalidade',\
                                                          'Medalha', 'País', 'População_Total'])
+util.contar_linha(df_atletas_medalhas_pop,'Atleta') # Teste
+###################################################################################################################
+# TRANSFORM/ ANALYSIS - NICOLE - OLIMPÍADAS
+###################################################################################################################
+# Transformando o Dataset em um dataFrame Pandas
+df_atletas_medalhas_pop = df_atletas_medalhas_pop.toPandas()
+# Atletas com o maior números de medalhas nas Olimpíadas
+print(df_atletas_medalhas_pop['Atleta'].value_counts().head(10))
+# Atletas com o menor números de medalhas nas Olimpíadas
 
-# Códigos de testes ################################################################################
+#util.controle_fluxo()
+print(df_atletas_medalhas_pop['Atleta'].value_counts().tail(10))
+#util.controle_fluxo()
+# Análise da quantidade de medalhas femininas nas Olimpíadas
+mulheres = pd.DataFrame({'Ouro': df_atletas_medalhas_pop[(df_atletas_medalhas_pop['Gênero'] == 'Female') &\
+                         (df_atletas_medalhas_pop['Medalha'] == 'Gold Medal')]['Medalha'].value_counts(),\
+                         'Prata': df_atletas_medalhas_pop[(df_atletas_medalhas_pop['Gênero'] == 'Female') &\
+                         (df_atletas_medalhas_pop['Medalha'] == 'Silver Medal')]['Medalha'].value_counts(),\
+                         'Bronze': df_atletas_medalhas_pop[(df_atletas_medalhas_pop['Gênero'] == 'Female') &\
+                         (df_atletas_medalhas_pop['Medalha'] == 'Bronze Medal')]['Medalha'].value_counts(),    
+})
+# Escolha do estilo de gráfico
+plt.style.use("ggplot")
+# Gráfico de 
+#mulheres.plot.hist(bins=15, edgecolor='black',title='Medalhas Femininas - Olímpicas')
+# Seleção das quantias de medalhas
+mulheres_O = mulheres['Ouro'][1]
+mulheres_P = mulheres['Prata'][2]
+mulheres_B = mulheres['Bronze'][0]
+#Análise da quantidade de medalhas masculinas nas Olimpíadas
+homens = pd.DataFrame({'Ouro': df_atletas_medalhas_pop[(df_atletas_medalhas_pop['Gênero'] == 'Male') &\
+                     (df_atletas_medalhas_pop['Medalha'] == 'Gold Medal')]['Medalha'].value_counts(),\
+                         'Prata': df_atletas_medalhas_pop[(df_atletas_medalhas_pop['Gênero'] == 'Male') &\
+                     (df_atletas_medalhas_pop['Medalha'] == 'Silver Medal')]['Medalha'].value_counts(),\
+                         'Bronze': df_atletas_medalhas_pop[(df_atletas_medalhas_pop['Gênero'] == 'Male') &\
+                     (df_atletas_medalhas_pop['Medalha'] == 'Bronze Medal')]['Medalha'].value_counts(),    
+})
+# Gráfico de 
+#homens.plot.hist(title='Medalhas Masculinas - Olímpicas')
+# Seleção das quantias de medalhas
+homem_O = homens['Ouro'][1]
+homem_P = homens['Prata'][2]
+homem_B = homens['Bronze'][0]
+# Impressão de medalhas femininas
+print('Medalhas femininas...')
+display(util.criar_df('Ouro', 'Prata','Bronze',mulheres_O, mulheres_P, mulheres_B)) # .style.hide_index()
+#util.controle_fluxo()
+# Impressão de medalhas masculinas
+print('Medalhas masculinas...')
+display(util.criar_df('Ouro', 'Prata','Bronze',homem_O, homem_P, homem_B)) # .style.hide_index()
+#util.controle_fluxo()
+input('<enter>')
+
+###################################################################################################################
+# TRANSFORM/ ANALYSIS - LEONARDO - OLIMPÍADAS
+###################################################################################################################
+# Transformando o Dataset em um dataFrame Pandas
+df = df_para_pop.toPandas()
+# Atletas com o maior números de medalhas nas paralimpiadas
+print(df['Atleta'].value_counts().head(10))
+
+#Atletas com o menor números de medalhas nas paralimpiadas
+print(df['Atleta'].value_counts().tail(10))
+
+#Análise da quantidade de medalhas femininas nas paralimpiadas
+mulheres = pd.DataFrame({'Ouro': df[(df['Gênero'] == 'Female') & (df['Medalha'] == 'Gold')]['Medalha'].value_counts(),
+                         'Prata': df[(df['Gênero'] == 'Female') & (df['Medalha'] == 'Silver')]['Medalha'].value_counts(),
+                         'Bronze': df[(df['Gênero'] == 'Female') & (df['Medalha'] == 'Bronze')]['Medalha'].value_counts(),    
+})
+mulheres_O = mulheres['Ouro'][1]
+mulheres_P = mulheres['Prata'][2]
+mulheres_B = mulheres['Bronze'][0]
+mulheres.plot.bar(title='Medalhas Femininas - Paralímpicas')
+display(UtilidadesG3.criar_df('Ouro', 'Prata','Bronze',mulheres_O, mulheres_P, mulheres_B).style.hide_index())
+
+#Análise da quantidade de medalhas masculinas nas paralimpiadas
+homens = pd.DataFrame({'Ouro': df[(df['Gênero'] == 'Male') & (df['Medalha'] == 'Gold')]['Medalha'].value_counts(),
+                         'Prata': df[(df['Gênero'] == 'Male') & (df['Medalha'] == 'Silver')]['Medalha'].value_counts(),
+                         'Bronze': df[(df['Gênero'] == 'Male') & (df['Medalha'] == 'Bronze')]['Medalha'].value_counts(),    
+})
+homem_O = homens['Ouro'][1]
+homem_P = homens['Prata'][2]
+homem_B = homens['Bronze'][0]
+plt.style.use("fivethirtyeight")
+homens.plot.barh(title='Medalhas Masculinas - Paralímpicas')
+display(UtilidadesG3.criar_df('Ouro', 'Prata','Bronze',homem_O, homem_P, homem_B).style.hide_index())
+
+
+#Soma do total de medalhas mulheres e homens
+soma_mulheres = mulheres_O + mulheres_P + mulheres_B
+print(soma_mulheres)
+
+soma_homens = homem_O + homem_P + homem_B
+print(soma_homens) 
+
+#Modalidades diferentes de esportes
+detalhes_itens = df_para_pop.distinct("Modalidade")
+display(detalhes_itens)
+
+#print(df[(df["Idade"] > 60)])
+# print(df[(df["Idade"] < 15)])
+
+
+###################################################################################################################
+# GRAPHICS - RODRIGO - OLIMPÍADAS
+###################################################################################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Códigos de testes ##########################################################################################
+
+# df_pop_atletas_medalhas = df_populacao.join(df_atletas_medalhas, \
+#     df_populacao['Country Name'] == df_atletas_medalhas['country'], how='right')
+# #df_pop_atletas_medalhas.show(5)
+
+# x = df_atletas_medalhas_pop.select(['country']).count()
+# y = df_pop_atletas_medalhas.select(['country']).count()
+# # print ('contagem de linhas \n ',x,'...', y,'...')
+# df1 = df_pop_atletas_medalhas.groupBy('country','Country name','Value').count().sort('Value').limit(36).toPandas()
+
 # df_populacao.show(500000)
 # print(df_populacao)
 # Método para troca
