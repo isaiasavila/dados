@@ -1,10 +1,14 @@
+# Trabalho Grupo 3
+# IMPORT
+###################################################################################################################
 from datetime import date
 from pyspark.sql.session import SparkSession
 from pyspark.sql.functions import explode_outer
 from pyspark.sql.types import *
 import pyspark.sql.functions as F
 import pandas as pd
-
+###################################################################################################################
+# CLASS
 class MongoG3():
     def conecta_mongo_colecao(self, tabela):
         '''
@@ -106,30 +110,19 @@ class UtilidadesG3():
         _dataFrame.show(25)
 
     def contar_linha(self, _dataFrame, coluna):
-        z = _dataFrame.select(coluna).count()
-        print('número de linhas: ',z,'\n.......................................')
+        contador = _dataFrame.select(coluna).count()
+        print('número de linhas: ', contador)
+        _dataFrame.show(25)
+        print('Tipo: ', type(_dataFrame))
+        print('\n.......................................')
 
     def mostrar_tipo(self, _dataFrame):
         print(type(_dataFrame))
 
-# EXTRACT - extração
+###################################################################################################################
+# EXTRACT
 # Objeto spark criado e o método para criar uma sessão é chamado
 spark = SparkG3().iniciar_sessao()
-# Esquema da base de dados
-schema = StructType([StructField("nome", StringType()),
-         StructField("short_name", StringType()),
-         StructField("gender", StringType()),
-         StructField("birth_date", StringType()),
-         StructField("birth_place", StringType()),
-         StructField("birth_country", StringType()),
-         StructField("country", StringType()),
-         StructField("discipline", StringType()),
-         StructField("discipline_code", StringType()),
-         StructField("residence_place", StringType()),
-         StructField("residence_country", StringType()),
-         StructField("height_m/ft", FloatType()),
-         StructField("url", StringType()),
-])
 # Criação do objeto de utilidades
 util = UtilidadesG3()
 # Caminho do 1º arquivo que será utilizado JSON
@@ -157,16 +150,19 @@ df_para = df_para.toDF(*['Idade', 'Categoria', 'Nome', 'Nac', 'rank', 'Gênero',
 # DROP de colunas dos dados irrelevantes
 df_para = df_para.drop('rank', 'rank1', 'count')
 # Caminho do 3º arquivo que será utilizado
-path = "C:/script/population_csv.csv"
+path = "C:/scripts/population_csv.csv"
 # Leitura do arquivo
 df_pop = spark.read.load(path, format = 'csv', sep = ',', inferschema = 'true', header = 'true')
 # Seleciona os dados do último censo (2018)
 df_pop = df_pop.select(['Country Name','Year','Value']).filter(df_pop['Year'] == '2018')
 # Efetuado o JOIN utilizando a chave primária (Country Name)
-util.contar_linha(df_pop)
+# util.contar_linha(df_pop, 'Country Name') # Teste
 df_para_pop = df_para.join(df_pop, df_para.Seleção == df_pop['Country Name'], 'left')
-util.contar_linha(df_para_pop)
-# df_para_pop.show()
+# util.contar_linha(df_para_pop, 'Country Name') # Teste de contagem
+# Utilizamos o drop para excluir os países sem medalha
+df_para_pop = df_para_pop.dropna(how='any')
+# util.contar_linha(df_para_pop, 'Country Name') # Teste de contagem
+# df_para_pop.show() # Teste
 # Renomeando as colunas para facilitar na identificação dos dados
 df_para_pop = df_para_pop.toDF(*['Idade', 'Evento', 'Atleta', 'Nac', 'Gênero', 'Modalidade', 'País', 'Ranking', 'Medalha'
                         , 'country', 'year', 'População_Total'])
@@ -175,18 +171,32 @@ df_para_pop = df_para_pop.select('Atleta', 'Idade', 'Gênero', 'Modalidade', 'Me
 # Métodos para testes
 # util.mostrar_tipo(df_para)
 # util.mostrar_df(df_para)
-
+# Lista com o nome das colunas a terem seu tipo alterado
 colunasI = ['Idade', 'População_Total']
-
+# Alteração dos tipos de colunas
 df_para_pop = util.converterColuna(df_para_pop, colunasI, IntegerType())
+# DataFrame tratado
+# util.mostrar_df(df_para_pop) # Teste
 
-# df_para_pop.printSchema()
-
-# ct = df_para_pop.select('País').count()
-# print(ct) #7917
-
-####################Nicole______________________________________
-# Caminho do  arquivo que será utilizado
+###################################################################################################################
+# TRANSFORM - NICOLE
+# Olimpíadas (athletes x medals)
+# Esquema da base de dados
+schema = StructType([StructField("nome", StringType()),
+         StructField("short_name", StringType()),
+         StructField("gender", StringType()),
+         StructField("birth_date", StringType()),
+         StructField("birth_place", StringType()),
+         StructField("birth_country", StringType()),
+         StructField("country", StringType()),
+         StructField("discipline", StringType()),
+         StructField("discipline_code", StringType()),
+         StructField("residence_place", StringType()),
+         StructField("residence_country", StringType()),
+         StructField("height_m/ft", FloatType()),
+         StructField("url", StringType()),
+])
+# Caminho do 1º arquivo que será utilizado
 path = "C:/scripts/athletes.csv"
 # Parâmetros de conexão
 # df1 e df2 serão usados como dataFrames temporários
@@ -195,8 +205,8 @@ df_atletas = spark.read.format("csv") \
     .load(path, sep=",", header=True)
 # Alterando o nome de uma das colunas, ação necessária para drop posterior
 df_atletas = df_atletas.withColumnRenamed("discipline", "disciplina")
-# Caminho do próximo arquivo que será utilizado
-path = "C:/scripts/medals.csv" 
+# Caminho do 2º arquivo que será utilizado
+path = "C:/scripts/medals.csv"
 # Iniciando segunda base de dados
 df_medalhas = spark.read.load(path, format="csv", sep=",", inferSchema="true", header="true")
 # Alterando o nome de uma das colunas do outro dataset, ação necessária para drop posterior
@@ -214,35 +224,56 @@ df_atletas_medalhas =  df_atletas_medalhas.drop("disciplina", "nome", "medal_cod
 df_atletas_medalhas = df_atletas_medalhas.withColumn('age',2021 - df_atletas_medalhas.birth_date.substr(1, 4))\
          .drop('birth_date')
 # Eliminando valores que não tenham número
-print('.....mmm')
+#util.contar_linha(df_atletas_medalhas,'athlete_name')
 df_atletas_medalhas = df_atletas_medalhas.dropna(how='any')
-util.mostrar_tipo(df_atletas_medalhas)
-util.mostrar_df(df_atletas_medalhas)
-util.printp()
-# df_atletas_medalhas.show() # Teste de impressão
-# df_atletas_medalhas.select(['country','medal_type','gender']).filter\
-#                           (df_atletas_medalhas['country'] == 'Chile').show(20)
-# Objeto criado para utilização do método converterColuna
-
+# util.mostrar_tipo(df_atletas_medalhas) # Teste
+# util.mostrar_df(df_atletas_medalhas) # Teste
 # Lista das colunas que serão alteradas
 colunas_inteiro = ['age']
 # Chamada do método que fará a alteração na coluna
 df_atletas_medalhas = util.converterColuna(df_atletas_medalhas, colunas_inteiro, IntegerType())
-# Caminho do próximo arquivo que será utilizado
+# Caminho do 3º arquivo que será utilizado
 path = "C:/scripts/population_csv.csv"
-# path = 'https://raw.githubusercontent.com/isaiasavila/dados/main/population_csv.csv'
-
-
+# github = 'https://raw.githubusercontent.com/isaiasavila/dados/main/population_csv.csv'
+# Leitura do arquivo
 df_populacao = spark.read.load(path, format = 'csv', sep = ',', inferschema = 'true', header = 'true')
-
-
 # Pandas
 # dfp = pd.read_csv('https://raw.githubusercontent.com/isaiasavila/dados/main/population_csv.csv')
-# print(dfp)
-
+# Seleção dos registros do dataset de população
 df_populacao = df_populacao.select(['Country Name','Year','Value']).filter(df_populacao['Year'] == '2018')
-colunas_inteiro = ['Value']
+# Alteração das colunas para Integer
+colunas_inteiro = ['Year', 'Value']
+# Método da classe para alteração de tipo de coluna
 df_populacao = util.converterColuna(df_populacao, colunas_inteiro, IntegerType())
+# JOIN da tabela (athletes x medals) x (população)
+df_atletas_medalhas_pop = df_atletas_medalhas.join(df_populacao,\
+     df_populacao['Country Name'] == df_atletas_medalhas['country'], how='left')
+print('saida esperada')
+util.contar_linha(df_atletas_medalhas_pop,'Country Name')
+
+
+
+df_pop_atletas_medalhas = df_populacao.join(df_atletas_medalhas, \
+    df_populacao['Country Name'] == df_atletas_medalhas['country'], how='right')
+#df_pop_atletas_medalhas.show(5)
+
+x = df_atletas_medalhas_pop.select(['country']).count()
+y = df_pop_atletas_medalhas.select(['country']).count()
+# print ('contagem de linhas \n ',x,'...', y,'...')
+df1 = df_pop_atletas_medalhas.groupBy('country','Country name','Value').count().sort('Value').limit(36).toPandas()
+
+# Seleção final dos dados que serão trabalhados
+df_atletas_medalhas_pop = df_atletas_medalhas_pop.select(['athlete_name','age','gender',\
+                                                          'discipline','medal_type','country','value'])
+# Excusão dos valores não numéricos
+df_atletas_medalhas_pop = df_atletas_medalhas_pop.dropna()
+# Excusão dos valores duplicados
+df_atletas_medalhas_pop = df_atletas_medalhas_pop.drop_duplicates()
+# Renomeação dos cabeçalhos para o português
+df_atletas_medalhas_pop = df_atletas_medalhas_pop.toDF(*['Atleta', 'Idade', 'Gênero', 'Modalidade',\
+                                                         'Medalha', 'País', 'População_Total'])
+
+# Códigos de testes ################################################################################
 # df_populacao.show(500000)
 # print(df_populacao)
 # Método para troca
@@ -290,30 +321,15 @@ df_populacao = util.converterColuna(df_populacao, colunas_inteiro, IntegerType()
 # print(type(df_populacao))
 #df_populacao = df_populacao.union(ets)
 # df_populacao.show(500) # Teste de impressão
-print('.....|||.....|||.....|||')
-df_populacao.filter(df_populacao['Country Name'] == 'Chinese Taipei').show()
-print('.....|||.....|||.....|||')
+# print('.....|||.....|||.....|||')
+# df_populacao.filter(df_populacao['Country Name'] == 'Chinese Taipei').show()
+# print('.....|||.....|||.....|||')
 # x = df_populacao.select(['country']).count()
 
 # print(x)
 
 
 #df1.filter(df1['Country Name'] == 'United States of America').select('Country Name','Value').show(50)
-
-df_atletas_medalhas_pop = df_atletas_medalhas.join(df_populacao,\
-     df_populacao['Country Name'] == df_atletas_medalhas['country'], how='left')
-# df_atletas_medalhas_pop.show(500)
-
-
-
-df_pop_atletas_medalhas = df_populacao.join(df_atletas_medalhas, \
-    df_populacao['Country Name'] == df_atletas_medalhas['country'], how='right')
-#df_pop_atletas_medalhas.show(5)
-
-x = df_atletas_medalhas_pop.select(['country']).count()
-y = df_pop_atletas_medalhas.select(['country']).count()
-# print ('contagem de linhas \n ',x,'...', y,'...')
-df1 = df_pop_atletas_medalhas.groupBy('country','Country name','Value').count().sort('Value').limit(36).toPandas()
 #print(df1) # Teste de impressão
 # Mostrando os países (distintos) agrupados por população filter('Value' == 'null')
 
@@ -321,23 +337,8 @@ df1 = df_pop_atletas_medalhas.groupBy('country','Country name','Value').count().
 #df1 = df_atletas_medalhas_pop.groupby('country', 'Value').count().filter(df_atletas_medalhas_pop['country'] != 'Argentina')
 #df1 = df_atletas_medalhas_pop.groupby('country', 'Value').count().filter(df_atletas_medalhas_pop['Value'] )
 
-
-
-
 # print('...\n\n\n...')
 # print('..........->->->')
-# Seleção final dos dados que serão trabalhados
-df_atletas_medalhas_pop = df_atletas_medalhas_pop.select(['athlete_name','age','gender',\
-                                                          'discipline','medal_type','country','value'])
-# Excusão dos valores não numéricos
-df_atletas_medalhas_pop = df_atletas_medalhas_pop.dropna()
-# Excusão dos valores duplicados
-df_atletas_medalhas_pop = df_atletas_medalhas_pop.drop_duplicates()
-# Renomeação dos cabeçalhos para o português
-df_atletas_medalhas_pop = df_atletas_medalhas_pop.toDF(*['Atleta', 'Idade', 'Gênero', 'Modalidade',\
-                                                         'Medalha', 'País', 'População_Total'])
-
-# Códigos de testes ################################################################################
 # |||||||||||||||| Código da Nicole's bad ||||||||||||||||
 #df_atletas_medalhas = df_atletas_medalhas.join(df_medalhas, ["country"], how='left')
 # x = df_atletas_medalhas.select(['country']).count()
