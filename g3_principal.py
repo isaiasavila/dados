@@ -105,6 +105,14 @@ class UtilidadesG3():
     def mostrar_df(self, _dataFrame):
         _dataFrame.show(25)
 
+    def contar_linha(self, _dataFrame, coluna):
+        z = _dataFrame.select(coluna).count()
+        print('número de linhas: ',z,'\n.......................................')
+
+    def mostrar_tipo(self, _dataFrame):
+        print(type(_dataFrame))
+
+# EXTRACT - extração
 # Objeto spark criado e o método para criar uma sessão é chamado
 spark = SparkG3().iniciar_sessao()
 # Esquema da base de dados
@@ -124,11 +132,11 @@ schema = StructType([StructField("nome", StringType()),
 ])
 # Criação do objeto de utilidades
 util = UtilidadesG3()
-# Caminho do arquivo que será utilizado JSON
+# Caminho do 1º arquivo que será utilizado JSON
 path = 'C:/scripts/paralympics_tokyo.json'
 # Leitura do arquivo em modo multi-linhas
 df_para_json = spark.read.option("multiline","true").json(path)
-# Caminho do arquivo que será utilizado para o JOIN com o arquivo JSON
+# Caminho do 2º arquivo que será utilizado para o JOIN com o arquivo JSON
 path = 'C:/scripts/Paralympics_tokyo_21.csv'
 # Leitura do arquivo
 df_para_csv = spark.read.load(path, format = 'csv', sep = ',', inferschema = 'true', header = 'true')
@@ -138,18 +146,47 @@ df_para_csv = df_para_csv.groupby('rank', 'medal').count()
 # O array de ranking, teve que ser segregado (EXPLODE) para deixar o JSON e CSV prontos para o JOIN
 df_explode = df_para_json.select('*', explode_outer(df_para_json.rank).alias('Ranking'))
 # Um novo dataFrame com dados da base de paralimpiadas, unificando o JSON e CSV
-df_para = df_explode.join(df_para_csv, df_explode.Ranking == df_para_csv.rank, 'left') 
-# df_para.show(20)
-# print(type(df_para))#<class 'pyspark.sql.dataframe.DataFrame'>
-# z = df_para.select('age').count()
-# print(z) #7917
-
+df_para = df_explode.join(df_para_csv, df_explode.Ranking == df_para_csv.rank, 'left')
+# Métodos para testes
+# util.mostrar_tipo(df_para)
+# util.mostrar_df(df_para)
+# util.contar_linha(df_para,'age') # print(z) #7917
+# Renomeação das colunas
 df_para = df_para.toDF(*['Idade', 'Categoria', 'Nome', 'Nac', 'rank', 'Gênero', 'Esporte', 'Seleção', 'Ranking', 'rank1'
                         , 'Medalha', 'count'])
-
+# DROP de colunas dos dados irrelevantes
 df_para = df_para.drop('rank', 'rank1', 'count')
+# Caminho do 3º arquivo que será utilizado
+path = "C:/script/population_csv.csv"
+# Leitura do arquivo
+df_pop = spark.read.load(path, format = 'csv', sep = ',', inferschema = 'true', header = 'true')
+# Seleciona os dados do último censo (2018)
+df_pop = df_pop.select(['Country Name','Year','Value']).filter(df_pop['Year'] == '2018')
+# Efetuado o JOIN utilizando a chave primária (Country Name)
+util.contar_linha(df_pop)
+df_para_pop = df_para.join(df_pop, df_para.Seleção == df_pop['Country Name'], 'left')
+util.contar_linha(df_para_pop)
+# df_para_pop.show()
+# Renomeando as colunas para facilitar na identificação dos dados
+df_para_pop = df_para_pop.toDF(*['Idade', 'Evento', 'Atleta', 'Nac', 'Gênero', 'Modalidade', 'País', 'Ranking', 'Medalha'
+                        , 'country', 'year', 'População_Total'])
+# Seleção no formato desejado para as análises
+df_para_pop = df_para_pop.select('Atleta', 'Idade', 'Gênero', 'Modalidade', 'Medalha', 'País', 'População_Total')
+# Métodos para testes
+# util.mostrar_tipo(df_para)
+# util.mostrar_df(df_para)
 
-# Caminho do arquivo que será utilizado
+colunasI = ['Idade', 'População_Total']
+
+df_para_pop = util.converterColuna(df_para_pop, colunasI, IntegerType())
+
+# df_para_pop.printSchema()
+
+# ct = df_para_pop.select('País').count()
+# print(ct) #7917
+
+####################Nicole______________________________________
+# Caminho do  arquivo que será utilizado
 path = "C:/scripts/athletes.csv"
 # Parâmetros de conexão
 # df1 e df2 serão usados como dataFrames temporários
@@ -177,7 +214,9 @@ df_atletas_medalhas =  df_atletas_medalhas.drop("disciplina", "nome", "medal_cod
 df_atletas_medalhas = df_atletas_medalhas.withColumn('age',2021 - df_atletas_medalhas.birth_date.substr(1, 4))\
          .drop('birth_date')
 # Eliminando valores que não tenham número
+print('.....mmm')
 df_atletas_medalhas = df_atletas_medalhas.dropna(how='any')
+util.mostrar_tipo(df_atletas_medalhas)
 util.mostrar_df(df_atletas_medalhas)
 util.printp()
 # df_atletas_medalhas.show() # Teste de impressão
@@ -314,3 +353,22 @@ df_atletas_medalhas_pop = df_atletas_medalhas_pop.toDF(*['Atleta', 'Idade', 'Gê
 # path = "C:/scripts/population_csv.csv"
 # df_csv = spark.read.load(path, format = 'csv', sep = ',', inferschema = 'true', header = 'true')
 # df_csv = df_csv.select(['Country Name','Year','Value']).filter(df_csv['Year'] == '2018')
+
+#Ricardo
+# ===================================================== TRANSFORM ======================================================
+# pandasDF = df_join.toPandas()
+# print(type(pandasDF)) # <class 'pandas.core.frame.DataFrame'>
+
+# df1 = pandasDF[pandasDF['Medalha'] != 'NA']
+# df1 = df1['Medalha'].value_counts()
+# print(df1)
+
+#==========================================================SQL==========================================================
+# df_join.registerTempTable('temp')
+# df_sql = spark.sql('SELECT Medalha, Idade, Esporte FROM temp WHERE Medalha != "NA" ORDER BY Idade')
+# df_sql = spark.sql(')
+# df_sql.show(1)
+# df_sql = spark.sql('SELECT Medalha, Idade, Esporte FROM temp WHERE Medalha != "NA" ORDER BY Idade DESC')
+# df_sql.show(1)
+
+#==========================================================SQL========================================================
