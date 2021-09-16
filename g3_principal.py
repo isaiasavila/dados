@@ -274,58 +274,58 @@ df_atletas_medalhas_pop = df_atletas_medalhas_pop.drop_duplicates()
 # Renomeação dos cabeçalhos para o português
 df_atletas_medalhas_pop = df_atletas_medalhas_pop.toDF(*['Atleta', 'Idade', 'Gênero', 'Modalidade',\
                                                          'Medalha', 'País', 'População_Total'])
-util.contar_linha(df_atletas_medalhas_pop,'Atleta') # Teste
+# util.contar_linha(df_atletas_medalhas_pop,'Atleta') # Teste
 ###################################################################################################################
 # TRANSFORM/ ANALYSIS - NICOLE - OLIMPÍADAS
 ###################################################################################################################
 # Transformando o Dataset em um dataFrame Pandas
-df_atletas_medalhas_pop = df_atletas_medalhas_pop.toPandas()
-# Atletas com o maior números de medalhas nas Olimpíadas
-print(df_atletas_medalhas_pop['Atleta'].value_counts().head(10))
-# Atletas com o menor números de medalhas nas Olimpíadas
+# df_atletas_medalhas_pop = df_atletas_medalhas_pop.toPandas()
+# # Atletas com o maior números de medalhas nas Olimpíadas
+# print(df_atletas_medalhas_pop['Atleta'].value_counts().head(10))
+# # Atletas com o menor números de medalhas nas Olimpíadas
 
-#util.controle_fluxo()
-print(df_atletas_medalhas_pop['Atleta'].value_counts().tail(10))
-#util.controle_fluxo()
-# Análise da quantidade de medalhas femininas nas Olimpíadas
-mulheres = pd.DataFrame({'Ouro': df_atletas_medalhas_pop[(df_atletas_medalhas_pop['Gênero'] == 'Female') &\
-                         (df_atletas_medalhas_pop['Medalha'] == 'Gold Medal')]['Medalha'].value_counts(),\
-                         'Prata': df_atletas_medalhas_pop[(df_atletas_medalhas_pop['Gênero'] == 'Female') &\
-                         (df_atletas_medalhas_pop['Medalha'] == 'Silver Medal')]['Medalha'].value_counts(),\
-                         'Bronze': df_atletas_medalhas_pop[(df_atletas_medalhas_pop['Gênero'] == 'Female') &\
-                         (df_atletas_medalhas_pop['Medalha'] == 'Bronze Medal')]['Medalha'].value_counts(),    
-})
-# Escolha do estilo de gráfico
-plt.style.use("ggplot")
-# Gráfico de 
-#mulheres.plot.hist(bins=15, edgecolor='black',title='Medalhas Femininas - Olímpicas')
-# Seleção das quantias de medalhas
-mulheres_O = mulheres['Ouro'][1]
-mulheres_P = mulheres['Prata'][2]
-mulheres_B = mulheres['Bronze'][0]
-#Análise da quantidade de medalhas masculinas nas Olimpíadas
-homens = pd.DataFrame({'Ouro': df_atletas_medalhas_pop[(df_atletas_medalhas_pop['Gênero'] == 'Male') &\
-                     (df_atletas_medalhas_pop['Medalha'] == 'Gold Medal')]['Medalha'].value_counts(),\
-                         'Prata': df_atletas_medalhas_pop[(df_atletas_medalhas_pop['Gênero'] == 'Male') &\
-                     (df_atletas_medalhas_pop['Medalha'] == 'Silver Medal')]['Medalha'].value_counts(),\
-                         'Bronze': df_atletas_medalhas_pop[(df_atletas_medalhas_pop['Gênero'] == 'Male') &\
-                     (df_atletas_medalhas_pop['Medalha'] == 'Bronze Medal')]['Medalha'].value_counts(),    
-})
-# Gráfico de 
-#homens.plot.hist(title='Medalhas Masculinas - Olímpicas')
-# Seleção das quantias de medalhas
-homem_O = homens['Ouro'][1]
-homem_P = homens['Prata'][2]
-homem_B = homens['Bronze'][0]
-# Impressão de medalhas femininas
-print('Medalhas femininas...')
-display(util.criar_df('Ouro', 'Prata','Bronze',mulheres_O, mulheres_P, mulheres_B)) # .style.hide_index()
-#util.controle_fluxo()
-# Impressão de medalhas masculinas
-print('Medalhas masculinas...')
-display(util.criar_df('Ouro', 'Prata','Bronze',homem_O, homem_P, homem_B)) # .style.hide_index()
-#util.controle_fluxo()
-input('<enter>')
+# #util.controle_fluxo()
+# print(df_atletas_medalhas_pop['Atleta'].value_counts().tail(10))
+# #util.controle_fluxo()
+# # Análise da quantidade de medalhas femininas nas Olimpíadas
+# mulheres = pd.DataFrame({'Ouro': df_atletas_medalhas_pop[(df_atletas_medalhas_pop['Gênero'] == 'Female') &\
+#                          (df_atletas_medalhas_pop['Medalha'] == 'Gold Medal')]['Medalha'].value_counts(),\
+#                          'Prata': df_atletas_medalhas_pop[(df_atletas_medalhas_pop['Gênero'] == 'Female') &\
+#                          (df_atletas_medalhas_pop['Medalha'] == 'Silver Medal')]['Medalha'].value_counts(),\
+#                          'Bronze': df_atletas_medalhas_pop[(df_atletas_medalhas_pop['Gênero'] == 'Female') &\
+#                          (df_atletas_medalhas_pop['Medalha'] == 'Bronze Medal')]['Medalha'].value_counts(),    
+# })
+# # Escolha do estilo de gráfico
+# plt.style.use("ggplot")
+# # Gráfico de 
+# #mulheres.plot.hist(bins=15, edgecolor='black',title='Medalhas Femininas - Olímpicas')
+# # Seleção das quantias de medalhas
+# mulheres_O = mulheres['Ouro'][1]
+# mulheres_P = mulheres['Prata'][2]
+# mulheres_B = mulheres['Bronze'][0]
+# #Análise da quantidade de medalhas masculinas nas Olimpíadas
+# homens = pd.DataFrame({'Ouro': df_atletas_medalhas_pop[(df_atletas_medalhas_pop['Gênero'] == 'Male') &\
+#                      (df_atletas_medalhas_pop['Medalha'] == 'Gold Medal')]['Medalha'].value_counts(),\
+#                          'Prata': df_atletas_medalhas_pop[(df_atletas_medalhas_pop['Gênero'] == 'Male') &\
+#                      (df_atletas_medalhas_pop['Medalha'] == 'Silver Medal')]['Medalha'].value_counts(),\
+#                          'Bronze': df_atletas_medalhas_pop[(df_atletas_medalhas_pop['Gênero'] == 'Male') &\
+#                      (df_atletas_medalhas_pop['Medalha'] == 'Bronze Medal')]['Medalha'].value_counts(),    
+# })
+# # Gráfico de 
+# #homens.plot.hist(title='Medalhas Masculinas - Olímpicas')
+# # Seleção das quantias de medalhas
+# homem_O = homens['Ouro'][1]
+# homem_P = homens['Prata'][2]
+# homem_B = homens['Bronze'][0]
+# # Impressão de medalhas femininas
+# print('Medalhas femininas...')
+# display(util.criar_df('Ouro', 'Prata','Bronze',mulheres_O, mulheres_P, mulheres_B)) # .style.hide_index()
+# #util.controle_fluxo()
+# # Impressão de medalhas masculinas
+# print('Medalhas masculinas...')
+# display(util.criar_df('Ouro', 'Prata','Bronze',homem_O, homem_P, homem_B)) # .style.hide_index()
+# #util.controle_fluxo()
+# input('<enter>')
 
 ###################################################################################################################
 # TRANSFORM/ ANALYSIS - LEONARDO - OLIMPÍADAS
@@ -333,9 +333,10 @@ input('<enter>')
 # Transformando o Dataset em um dataFrame Pandas
 df = df_para_pop.toPandas()
 # Atletas com o maior números de medalhas nas paralimpiadas
+print('Atletas com o maior números de medalhas nas paralimpiadas')
 print(df['Atleta'].value_counts().head(10))
-
 #Atletas com o menor números de medalhas nas paralimpiadas
+print('Atletas com o menor números de medalhas nas paralimpiadas')
 print(df['Atleta'].value_counts().tail(10))
 
 #Análise da quantidade de medalhas femininas nas paralimpiadas
@@ -347,7 +348,8 @@ mulheres_O = mulheres['Ouro'][1]
 mulheres_P = mulheres['Prata'][2]
 mulheres_B = mulheres['Bronze'][0]
 mulheres.plot.bar(title='Medalhas Femininas - Paralímpicas')
-display(UtilidadesG3.criar_df('Ouro', 'Prata','Bronze',mulheres_O, mulheres_P, mulheres_B).style.hide_index())
+print('Medalhas femininas...')
+display(util.criar_df('Ouro', 'Prata','Bronze',mulheres_O, mulheres_P, mulheres_B))
 
 #Análise da quantidade de medalhas masculinas nas paralimpiadas
 homens = pd.DataFrame({'Ouro': df[(df['Gênero'] == 'Male') & (df['Medalha'] == 'Gold')]['Medalha'].value_counts(),
@@ -359,23 +361,21 @@ homem_P = homens['Prata'][2]
 homem_B = homens['Bronze'][0]
 plt.style.use("fivethirtyeight")
 homens.plot.barh(title='Medalhas Masculinas - Paralímpicas')
-display(UtilidadesG3.criar_df('Ouro', 'Prata','Bronze',homem_O, homem_P, homem_B).style.hide_index())
+print('Medalhas masculinas...')
+display(util.criar_df('Ouro', 'Prata','Bronze',homem_O, homem_P, homem_B))
 
 
 #Soma do total de medalhas mulheres e homens
+print('Soma total de medalhas femininas...')
 soma_mulheres = mulheres_O + mulheres_P + mulheres_B
 print(soma_mulheres)
-
+print('Soma total de medalhas masculinas...')
 soma_homens = homem_O + homem_P + homem_B
 print(soma_homens) 
 
 #Modalidades diferentes de esportes
-detalhes_itens = df_para_pop.distinct("Modalidade")
-display(detalhes_itens)
-
-#print(df[(df["Idade"] > 60)])
-# print(df[(df["Idade"] < 15)])
-
+#serie = pd.Series.unique(['Esporte'])
+#detalhes_itens = df.distinct("Esporte")
 
 ###################################################################################################################
 # GRAPHICS - RODRIGO - OLIMPÍADAS
