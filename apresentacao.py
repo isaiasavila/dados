@@ -172,7 +172,7 @@ df_pop = spark.read.load(path, format = 'csv', sep = ',', inferschema = 'true', 
 df_pop = df_pop.select(['Country Name','Year','Value']).filter(df_pop['Year'] == '2018')
 # Efetuado o JOIN utilizando a chave primária (Country Name)
 # util.contar_linha(df_pop, 'Country Name') # Teste
-df_para_pop = df_para.join(df_pop, df_para.Seleção == df_pop['Country Name'], 'left')
+df_para_pop = df_para.join(df_pop, df_para['Seleção'] == df_pop['Country Name'], 'left')
 # util.contar_linha(df_para_pop, 'Country Name') # Teste de contagem
 # Utilizamos o drop para excluir os países sem medalha
 df_para_pop = df_para_pop.dropna(how='any')
